@@ -1,16 +1,27 @@
 package com.backend.usersapp.models.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "users")
 public class User {
     @Id
+//    @Min() @Max()
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotEmpty(message = "El nombre de usuario es necesario")
+    @Size(min = 4, max = 10, message = "Debes escribir un username de entre 4 y 10 caracteres")
     @Column(unique = true)
     private String username;
+
+    @NotEmpty(message = "Deberias agregar una contraseña")
     private String password;
+
+    @Email(message = "Debes colocar un email valido")
     @Column(unique = true)
     private String email;
 
