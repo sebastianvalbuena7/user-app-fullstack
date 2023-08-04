@@ -1,13 +1,16 @@
 package com.backend.usersapp.services.Impl;
 
+import com.backend.usersapp.models.entities.Role;
 import com.backend.usersapp.models.entities.User;
+import com.backend.usersapp.models.request.UserRequest;
+import com.backend.usersapp.repositories.RoleRepository;
 import com.backend.usersapp.repositories.UserRepository;
 import com.backend.usersapp.services.UserService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,9 +18,13 @@ import java.util.Optional;
 @Transactional
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -32,11 +39,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User save(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        Optional<Role> o = roleRepository.findByName("ROLE_USER");
+
+        List<Role> roles = new ArrayList<>();
+        if (o.isPresent()) {
+            roles.add(o.orElseThrow());
+        }
+        user.setRoles(roles);
+
         return userRepository.save(user);
     }
 
     @Override
-    public Optional<User> update(User user, Long id) {
+    public Optional<User> update(UserRequest user, Long id) {
         Optional<User> userOptional = userRepository.findById(id);
         if (userOptional.isPresent()) {
             User userDb = userOptional.orElseThrow();
