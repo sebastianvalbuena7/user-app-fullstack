@@ -1,5 +1,6 @@
 package com.backend.usersapp.auth.filters;
 
+import com.backend.usersapp.auth.SimpleGrantedAuthorityJsonCreator;
 import com.backend.usersapp.auth.TokenConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -46,12 +47,17 @@ public class JwtValidationFilter extends BasicAuthenticationFilter {
                     .setSigningKey(SECRET_KEY)
                     .build()
                     .parseClaimsJws(token)
-                        .getBody();
+                    .getBody();
+            Object authoritiesClaims = claims.get("authorities");
             String username = claims.getSubject();
-            List<GrantedAuthority>  authorities = new ArrayList<>();
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
 
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+            Collection<? extends GrantedAuthority> authorities = Arrays
+                    .asList(new ObjectMapper()
+                            .addMixIn( SimpleGrantedAuthority.class, SimpleGrantedAuthorityJsonCreator.class)
+                            .readValue(authoritiesClaims.toString().getBytes(), SimpleGrantedAuthority[].class));
+
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username,
+                    null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             chain.doFilter(request, response);
