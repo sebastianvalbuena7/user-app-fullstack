@@ -3,6 +3,8 @@ package com.backend.usersapp.services.Impl;
 import com.backend.usersapp.models.entities.Role;
 import com.backend.usersapp.models.entities.User;
 import com.backend.usersapp.models.request.UserRequest;
+import com.backend.usersapp.models.response.UserDTO;
+import com.backend.usersapp.models.response.mapper.DtoMapper;
 import com.backend.usersapp.repositories.RoleRepository;
 import com.backend.usersapp.repositories.UserRepository;
 import com.backend.usersapp.services.UserService;
@@ -28,17 +30,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> findAll() {
-        return (List<User>) userRepository.findAll();
+    public List<UserDTO> findAll() {
+        List<User> users = (List<User>) userRepository.findAll();
+        return users
+                .stream()
+                .map(user -> DtoMapper.builder().setUser(user).build())
+                .toList();
     }
 
     @Override
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public Optional<UserDTO> findById(Long id) {
+        return userRepository
+                .findById(id)
+                .map(user -> DtoMapper
+                        .builder()
+                        .setUser(user)
+                        .build());
     }
 
     @Override
-    public User save(User user) {
+    public UserDTO save(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         Optional<Role> o = roleRepository.findByName("ROLE_USER");
 
@@ -48,19 +59,22 @@ public class UserServiceImpl implements UserService {
         }
         user.setRoles(roles);
 
-        return userRepository.save(user);
+        return DtoMapper.builder().setUser(userRepository.save(user)).build();
     }
 
     @Override
-    public Optional<User> update(UserRequest user, Long id) {
-        Optional<User> userOptional = userRepository.findById(id);
-        if (userOptional.isPresent()) {
-            User userDb = userOptional.orElseThrow();
+    public Optional<UserDTO> update(UserRequest user, Long id) {
+        Optional<User> userFind = userRepository.findById(id);
+        User userOptional = null;
+        if (userFind.isPresent()) {
+            User userDb = userFind.orElseThrow();
             userDb.setUsername(user.getUsername());
             userDb.setEmail(user.getEmail());
-            return Optional.of(userRepository.save(userDb));
+            userOptional = userRepository.save(userDb);
         }
-        return Optional.empty();
+        return Optional.ofNullable(DtoMapper.builder()
+                .setUser(userOptional)
+                .build());
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.backend.usersapp.controllers;
 
 import com.backend.usersapp.models.entities.User;
 import com.backend.usersapp.models.request.UserRequest;
+import com.backend.usersapp.models.response.UserDTO;
 import com.backend.usersapp.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -25,13 +26,13 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> get() {
+    public List<UserDTO> get() {
         return userService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> show(@PathVariable Long id) {
-        Optional<User> userOptional = userService.findById(id);
+        Optional<UserDTO> userOptional = userService.findById(id);
         if(userOptional.isPresent()) {
             return ResponseEntity.ok(userOptional.orElseThrow());
         } else {
@@ -51,7 +52,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@Valid @RequestBody UserRequest user, BindingResult bindingResult , @PathVariable Long id) {
         if (bindingResult.hasErrors()) return validation(bindingResult);
-        Optional<User> userOptional = userService.update(user, id);
+        Optional<UserDTO> userOptional = userService.update(user, id);
         if (userOptional.isPresent()) {
             return ResponseEntity.status(HttpStatus.CREATED).body(userOptional.orElseThrow());
         }
@@ -60,7 +61,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
-        Optional<User> userOptional = userService.findById(id);
+        Optional<UserDTO> userOptional = userService.findById(id);
         if(userOptional.isPresent()) {
             userService.remove(userOptional.get().getId());
             return ResponseEntity.noContent().build();
